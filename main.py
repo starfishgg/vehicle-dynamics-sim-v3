@@ -6,6 +6,7 @@ import pygame
 from vehicle.vehicle_factory import create_rear_wheel_drive_car
 from visualisation.camera import Camera
 from visualisation.vehicle_renderer import VehicleRenderer
+from core.driver_input import DriverInput
 
 SCREEN_WIDTH = 1100
 SCREEN_HEIGHT = 750
@@ -27,7 +28,7 @@ def main() -> None:
     font = pygame.font.Font(None, 26)
     small_font = pygame.font.Font(None, 21)
 
-    vehicle, dynamics = create_rear_wheel_drive_car()
+    vehicle, vehicle_dynamics = create_rear_wheel_drive_car()
     engine = vehicle.drivetrain.engine
 
     renderer = VehicleRenderer(vehicle)
@@ -45,6 +46,8 @@ def main() -> None:
             MAX_FRAME_TIME,
         )
 
+        requested_gear = None
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -53,26 +56,44 @@ def main() -> None:
                 if event.key == pygame.K_ESCAPE:
                     running = False
 
+                elif event.key == pygame.K_q:
+                    current_gear = vehicle.drivetrain.gearbox.selected_gear
+                    requested_gear = max(-1, current_gear -1)
+
+                elif event.key == pygame.K_e:
+                    current_gear = vehicle.drivetrain.gearbox.selected_gear
+                    requested_gear = min(
+                        vehicle.drivetrain.gearbox.gear_count,
+                        current_gear + 1,
+                    )
+
         keys = pygame.key.get_pressed()
+
+
 
         throttle = 1.0 if keys[pygame.K_w] else 0.0
         brake = 1.0 if keys[pygame.K_s] else 0.0
 
-        steering_input = 0.0
+        steering = 0.0
         if keys[pygame.K_a]:
-            steering_input -= 1.0
+            steering -= 1.0
         if keys[pygame.K_d]:
-            steering_input += 1.0
+            steering += 1.0
 
-        engine.set_throttle(throttle)
+        clutch_pedal = 1.0 if keys[pygame.K_LSHIFT] else 0.0
 
-        for wheel in vehicle.wheels:
-            wheel.set_brake_input(brake)
+        driver_input = DriverInput(
+            throttle=throttle,
+            brake=brake,
+            steering=steering,
+            clutch_pedal=clutch_pedal,
+            requested_gear=requested_gear,
+        )
 
         accumulator += frame_time
 
         while accumulator >= PHYSICS_TIMESTEP:
-            dynamics.step(PHYSICS_TIMESTEP)
+            vehicle_dynamics.step(PHYSICS_TIMESTEP, driver_input)
             accumulator -= PHYSICS_TIMESTEP
 
             diagnostic_timer += PHYSICS_TIMESTEP
@@ -101,7 +122,7 @@ def main() -> None:
                     rear_right.linear_speed * 3.6
                 )
 
-                print(
+                """ print(
                     f"\nVehicle: {vehicle_speed_kmh:.1f} km/h | "
                     f"Engine: {engine_rpm:.0f} RPM | "
                     f"Gear: {gearbox.selected_gear} | "
@@ -123,7 +144,7 @@ def main() -> None:
                 )
 
                 for index, wheel in enumerate(vehicle.wheels):
-                    tyre_force = dynamics.longitudinal_tyre_forces[index]
+                    tyre_force = vehicle_dynamics.longitudinal_tyre_forces[index]
 
                     print(
                         f"Wheel {index}: "
@@ -133,7 +154,7 @@ def main() -> None:
                         f"expected={-tyre_force * wheel.radius:.3f} Nm, "
                         f"drive={wheel.drive_torque:.3f} Nm, "
                         f"speed={wheel.angular_velocity:.3f} rad/s"
-                    )
+                    ) """
 
 
                 diagnostic_timer = 0.0
@@ -179,12 +200,15 @@ def main() -> None:
             f"Speed: {speed_kmh:6.1f} km/h",
             f"Engine: {engine.rpm:6.0f} RPM",
             f"Gear: {vehicle.drivetrain.gearbox.selected_gear}",
-            f"Throttle: {throttle * 100:3.0f}%",
-            f"Brake: {brake * 100:3.0f}%",
-            f"Steering input: {steering_input:+.1f}",
+            f"Throttle: {driver_input.throttle * 100:3.0f}%",
+            f"Brake: {driver_input.brake * 100:3.0f}%",
+            f"Steering input: {driver_input.steering:+.1f}",
+            f"Clutch pedal: {driver_input.clutch_pedal:+.1f}",
+            f"Clutch position: {vehicle.drivetrain.clutch.engagement:+.1f}",
+            f"Selected gear: {vehicle.drivetrain.gearbox.selected_gear}",
         ]
 
-        panel = pygame.Surface((280, 190), pygame.SRCALPHA)
+        panel = pygame.Surface((280, 250), pygame.SRCALPHA)
         panel.fill((15, 18, 22, 220))
         screen.blit(panel, (15, 15))
 

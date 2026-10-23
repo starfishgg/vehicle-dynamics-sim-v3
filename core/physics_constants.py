@@ -22,3 +22,4 @@ DRY_ASPHALT: float = 1.0
 WET_ASPHALT: float = 0.70
 LOOSE_GRAVEL: float = 0.65
 ICE: float = 0.15
+AIR_SURFACE: float = 0.0 # for if the car becomes airborne

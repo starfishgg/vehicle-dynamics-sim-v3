@@ -8,7 +8,7 @@ class DriverInput:
 
     Throttle:       0.0 to 1.0
     Brake:          0.0 to 1.0
-    Steering:      -1.0 to 1.0; positive means left
+    Steering:      -1.0 to 1.0; positive means right
     Requested gear: None means no new request;
                     -1 means reverse;
                      0 means neutral;
@@ -24,10 +24,12 @@ class DriverInput:
             brake: float = 0.0,
             steering: float = 0.0,
             requested_gear: int | None = None,
+            clutch_pedal: float = 0.0,
     ):
         self.throttle = self._clamp(throttle, 0.0, 1.0)
         self.brake = self._clamp(brake, 0.0, 1.0)
         self.steering = self._clamp(steering, -1.0, 1.0)
+        self.clutch_pedal = self._clamp(clutch_pedal, 0.0, 1.0)
 
         if requested_gear is not None:
             if isinstance(requested_gear, bool) or not isinstance(requested_gear, int):

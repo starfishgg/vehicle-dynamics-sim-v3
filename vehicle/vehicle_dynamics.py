@@ -3,7 +3,11 @@
 import math
 
 from core.physics_constants import AIR_DENSITY, DRY_ASPHALT, GRAVITY
+from core.driver_input import DriverInput
 from vehicle.vehicle import Vehicle
+from powertrain.clutch_controller import ClutchController
+
+
 
 
 # Below this speed, use a low-speed reference when calculating tyre slip.
@@ -31,6 +35,9 @@ class VehicleDynamics:
 
         self.vehicle = vehicle
         self.surface_grip = surface_grip
+        self.clutch_controller = ClutchController(
+            vehicle.drivetrain.clutch
+        )
 
         # Keep the most recent force calculations available for debugging.
         self.longitudinal_tyre_forces: tuple[float, ...] = (
@@ -139,13 +146,43 @@ class VehicleDynamics:
         return -math.copysign(resistance_magnitude, speed)
 
 
-    def step(self, dt: float) -> None:
+    def step(
+            self, 
+            dt: float,
+            driver_input: DriverInput | None = None,
+    ) -> None:
         """Advance wheel and longitudinal body dynamics by one time step."""
         if not math.isfinite(dt) or dt <= 0.0:
             raise ValueError("Time step must be finite and positive.")
 
+        if driver_input is None:
+            driver_input = DriverInput()
+        
         vehicle = self.vehicle
         state = vehicle.state
+
+        # Apply player controls through the existing component interfaces.
+
+        # Apply throttle
+        vehicle.drivetrain.engine.set_throttle(driver_input.throttle)
+
+        # Apply brake
+        for wheel in vehicle.wheels:
+            wheel.set_brake_input(driver_input.brake)
+
+        # Apply clutch-pedal input to the existing drivetrain clutch.
+        self.clutch_controller.update(driver_input.clutch_pedal)
+
+
+        #print(
+        #    f"DEBUG pedal={driver_input.clutch_pedal:.1f} "
+        #    f"engagement={vehicle.drivetrain.clutch.engagement:.1f}"
+        #)
+
+
+        # Process a requested gear change, if one was supplied.
+        if driver_input.requested_gear is not None:
+            vehicle.drivetrain.gearbox.select_gear(driver_input.requested_gear)
 
         # 1. Calculate tyre forces and feed their reaction torques into
         #    the wheel and drivetrain models.

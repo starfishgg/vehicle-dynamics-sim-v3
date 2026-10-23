@@ -435,24 +435,10 @@ class DrivetrainSolver:
             )
         )
 
-
-
-
-        print(
-            "Initial lock check:",
-            f"can_lock={can_lock}",
-            f"engine={original_engine_speed:.3f}",
-            f"gearbox={self.gearbox_input_angular_velocity:.3f}",
-            f"required_torque={original_required_torque:.3f}",
-            f"capacity={self.clutch.torque_capacity:.3f}",
-        )
-
-
-
-
         candidate_engine_speed = original_engine_speed
         candidate_wheel_speeds = original_wheel_speeds
         selected_clutch_torque = original_required_torque
+
 
         if can_lock:
             # Synchronise only in local candidate values. Nothing has been
@@ -488,18 +474,6 @@ class DrivetrainSolver:
                     gearbox_angular_velocity=candidate_gearbox_speed,
                     required_engine_torque=selected_clutch_torque,
                 )
-
-
-
-                print(
-                    "Candidate lock check:",
-                    f"can_lock={can_lock}",
-                    f"candidate_engine={candidate_engine_speed:.3f}",
-                    f"candidate_gearbox={candidate_gearbox_speed:.3f}",
-                    f"required_torque={selected_clutch_torque:.3f}",
-                )
-
-
 
 
                 if can_lock:
@@ -571,9 +545,6 @@ class DrivetrainSolver:
                         )
                     ):
                         can_lock = False
-
-
-        print("Final drivetrain mode:", "LOCKED" if can_lock else "SLIPPING")
 
 
         if can_lock:
