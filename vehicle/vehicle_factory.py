@@ -54,7 +54,7 @@ def create_rear_wheel_drive_car() -> tuple[
     gearbox = Gearbox(
         forward_ratios=(3.5, 2.1, 1.4, 1.0),
         reverse_ratio=3.2,
-        initial_gear=1,
+        initial_gear=0,
     )
 
     differential = Differential()

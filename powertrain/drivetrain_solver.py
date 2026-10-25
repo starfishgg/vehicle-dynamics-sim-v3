@@ -374,6 +374,20 @@ class DrivetrainSolver:
         if not math.isfinite(dt) or dt <= 0.0:
             raise ValueError("dt must be finite and positive.")
 
+        if not hasattr(self, "_debug_step_count"):
+            self._debug_step_count = 0
+
+        if self._debug_step_count < 10:
+            print(
+                f"STARTUP step={self._debug_step_count} "
+                f"rpm={self.engine.rpm:.1f} "
+                f"throttle={self.engine.throttle:.2f} "
+                f"gear_ratio={self.gearbox.gear_ratio} "
+                f"clutch_engagement={self.clutch.engagement:.2f} "
+                f"dt={dt:.5f}"
+            )
+        self._debug_step_count += 1
+
         self.gearbox_input_angular_velocity = (
             self.calculate_gearbox_input_speed()
         )
@@ -389,7 +403,9 @@ class DrivetrainSolver:
                 self.engine.angular_velocity
                 + engine_net_torque / self.engine.inertia * dt
             )
+
             self.engine.angular_velocity = max(0.0, next_engine_speed)
+            #self.engine.maintain_idle()
 
             for wheel in self.driven_wheels:
                 wheel.set_drive_torque(0.0)
@@ -586,6 +602,20 @@ class DrivetrainSolver:
                 self.engine.angular_velocity
                 + engine_net_torque / self.engine.inertia * dt
             )
+
+
+            print(
+                f"SLIPPING "
+                f"rpm={self.engine.rpm:.1f} "
+                f"engagement={self.clutch.engagement:.2f} "
+                f"clutch_torque={self.clutch_torque:.2f} "
+                f"combustion={self.engine.calculate_combustion_torque():.2f} "
+                f"friction={self.engine.calculate_friction_torque():.2f} "
+                f"net={engine_net_torque:.2f} "
+                f"next_rpm={max(0.0, next_engine_speed) * 60.0 / (2.0 * math.pi):.1f}"
+            )
+
+
             self.engine.angular_velocity = max(0.0, next_engine_speed)
 
             for wheel in self.driven_wheels:

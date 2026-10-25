@@ -35,7 +35,7 @@ class Gearbox:
         self.forward_ratios = tuple(forward_ratios)
         self.reverse_ratio = -reverse_ratio
         self.efficiency = efficiency
-        self.selected_gear = 0
+        #self.selected_gear = 0
 
         self.select_gear(initial_gear)
 

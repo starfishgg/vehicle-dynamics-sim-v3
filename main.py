@@ -35,7 +35,6 @@ def main() -> None:
     camera = Camera(renderer.pixels_per_metre)
 
     accumulator = 0.0
-    steering_input = 0.0
     running = True
 
     diagnostic_timer = 0.0
@@ -121,6 +120,7 @@ def main() -> None:
                 rear_right_speed_kmh = (
                     rear_right.linear_speed * 3.6
                 )
+
 
                 """ print(
                     f"\nVehicle: {vehicle_speed_kmh:.1f} km/h | "

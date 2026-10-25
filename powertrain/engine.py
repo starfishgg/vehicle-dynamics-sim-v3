@@ -184,7 +184,15 @@ class Engine:
             fall_width=self.fall_width,
         )
 
-        return full_throttle_torque * self.throttle
+        throttle_torque = full_throttle_torque * self.throttle
+
+        # Supply enough torque to counter friction at idle.
+        if self.throttle == 0.0 and self.rpm <= self.idle_rpm:
+            rpm_error = self.idle_rpm - self.rpm
+            idle_control_torque = self.friction_torque + (0.1 * rpm_error)
+            return max(throttle_torque, idle_control_torque)
+
+        return throttle_torque
 
 
     def calculate_friction_torque(self) -> float:
@@ -219,3 +227,4 @@ class Engine:
             + self.calculate_friction_torque()
             + clutch_torque
         )
+
